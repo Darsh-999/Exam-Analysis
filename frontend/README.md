@@ -1,16 +1,59 @@
-# React + Vite
+# ExamInsight — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + Tailwind CSS frontend for ExamInsight.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 18+ and npm
+- The backend running locally (see [`../backend/README.md`](../backend/README.md)) — the frontend
+  has no data of its own, every screen calls the backend API
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+cd frontend
+npm install
+```
 
-## Expanding the Oxlint configuration
+## Run the dev server
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```
+npm run dev
+```
+
+Opens on http://localhost:5173 (Vite picks the next free port if that one's taken). Every
+`/api/...` call is proxied to the backend at `http://127.0.0.1:8000` (see `vite.config.js`) — make
+sure the backend is running first, or screens will show a "couldn't load" error.
+
+## Build for production
+
+```
+npm run build
+```
+
+Outputs static assets to `frontend/dist`. In production the backend serves this build directly
+from the same origin, so no separate API base URL is needed — the app always calls relative
+`/api/...` paths (see `.env.example`).
+
+## Preview a production build locally
+
+```
+npm run preview
+```
+
+## Lint
+
+```
+npm run lint
+```
+
+## Project structure
+
+- `src/pages/` — one folder per screen (Login, ProjectsDashboard, ProjectView, QuestionsView, TopicsView, TrendsView)
+- `src/components/` — shared UI building blocks (Button, Modal, DataTable, StatCard, StatusBadge, LoadingState, ErrorState, ...)
+- `src/services/` — one file per backend router; every API call goes through these
+- `src/context/` — auth state (token + logged-in email, persisted to `localStorage`)
+- `src/hooks/` — shared data-fetching (`useApiData`) and polling (`usePolling`) hooks
+- `src/routes/` — route definitions + the protected-route guard
+
+See [`BUILD_PLAN.md`](BUILD_PLAN.md) for the full build history and the decisions made along the way.
