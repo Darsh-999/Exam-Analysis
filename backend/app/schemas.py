@@ -150,3 +150,84 @@ class AllocationStatus(str, Enum):
     ALLOCATED = "allocated"
     UNALLOCATED = "unallocated"
     MULTI_ALLOCATED = "multi_allocated"
+
+
+class FrequencyMetric(str, Enum):
+    COUNT = "count"
+    MARKS = "marks"
+
+
+class ChartPoint(BaseModel):
+    label: str
+    value: float
+
+
+class ChartOut(BaseModel):
+    """Generic single-series chart response, reused by every trend endpoint
+    whose data is just a ranked or bucketed list of (label, value) pairs.
+    """
+
+    title: str
+    chart_type: str
+    description: str
+    x_label: str | None = None
+    y_label: str | None = None
+    data: list[ChartPoint]
+
+
+class MarksTopicSegment(BaseModel):
+    topic: str
+    marks: float
+
+
+class MarksPerPaperEntry(BaseModel):
+    paper_id: str
+    filename: str
+    subject_code: str | None = None
+    exam_date: str | None = None
+    total_marks: float
+    segments: list[MarksTopicSegment]
+
+
+class MarksPerPaperOut(BaseModel):
+    title: str
+    chart_type: str
+    description: str
+    x_label: str | None = None
+    y_label: str | None = None
+    data: list[MarksPerPaperEntry]
+
+
+class HeatmapCell(BaseModel):
+    row: str
+    column: str
+    value: int
+
+
+class HeatmapOut(BaseModel):
+    title: str
+    chart_type: str
+    description: str
+    x_label: str | None = None
+    y_label: str | None = None
+    rows: list[str]
+    columns: list[str]
+    data: list[HeatmapCell]
+
+
+class AllocationBreakdownEntry(BaseModel):
+    paper_id: str
+    filename: str
+    total_questions: int
+    unallocated: int
+    single_allocated: int
+    multi_allocated: int
+
+
+class AllocationHealthOut(BaseModel):
+    title: str
+    chart_type: str
+    description: str
+    x_label: str | None = None
+    y_label: str | None = None
+    data: list[AllocationBreakdownEntry]

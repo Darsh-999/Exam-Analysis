@@ -7,8 +7,12 @@ from app.database import (
     get_questions_collection,
 )
 from app.deps import get_current_user
-from app.schemas import QuestionOut, QuestionPaperSummaryOut
-from app.services.analytics import allocation_counts_by_paper, to_question_out
+from app.schemas import ChartOut, ChartPoint, QuestionOut, QuestionPaperSummaryOut
+from app.services.analytics import (
+    allocation_counts_by_paper,
+    to_question_out,
+    topic_distribution_for_paper,
+)
 from app.utils import get_or_404, parse_object_id
 
 router = APIRouter(tags=["question-papers"])
@@ -71,3 +75,34 @@ async def list_question_paper_questions(
             "created_at", 1
         )
     ]
+
+
+@router.get(
+    "/question-papers/{question_paper_id}/trends/topic-distribution", response_model=ChartOut
+)
+async def get_question_paper_topic_distribution(
+    question_paper_id: str, current_user: dict = Depends(get_current_user)
+):
+    """Pie chart: share of this paper's questions belonging to each topic.
+    Pair with `GET /projects/{project_id}/question-papers` to build a
+    paper-picker dropdown above the chart.
+    """
+    paper = await get_or_404(
+        get_question_papers_collection(),
+        parse_object_id(question_paper_id, "question paper"),
+        "Question paper",
+    )
+
+    rows = await topic_distribution_for_paper(get_questions_collection(), question_paper_id)
+
+    return ChartOut(
+        title=f"Topic Distribution - {paper['filename']}",
+        chart_type="pie",
+        description=(
+            "Share of this paper's questions belonging to each topic. Each "
+            "question is counted under its first-listed mapped topic only, "
+            "so slices sum exactly to the paper's total question count. "
+            "Questions with no mapped topic appear as 'Unallocated'."
+        ),
+        data=[ChartPoint(label=name, value=count) for name, count in rows],
+    )

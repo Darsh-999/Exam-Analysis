@@ -11,7 +11,16 @@ from app.database import (
     get_syllabi_collection,
     get_users_collection,
 )
-from app.routers import analytics, auth, documents, projects, question_papers, questions, syllabi
+from app.routers import (
+    analytics,
+    auth,
+    documents,
+    projects,
+    question_papers,
+    questions,
+    syllabi,
+    trends,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -46,6 +55,7 @@ app.include_router(syllabi.router)
 app.include_router(question_papers.router)
 app.include_router(questions.router)
 app.include_router(analytics.router)
+app.include_router(trends.router)
 
 
 @app.get("/health")
