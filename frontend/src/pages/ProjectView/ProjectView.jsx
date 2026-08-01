@@ -10,6 +10,7 @@ import { usePolling } from '../../hooks/usePolling';
 import { getProjectSummary } from '../../services/projectsService';
 import { listProjectQuestionPapers } from '../../services/questionPapersService';
 import { listProjectSyllabi } from '../../services/syllabiService';
+import { getDocumentsStatus } from '../../services/documentsService';
 import ProjectHeader from './ProjectHeader';
 import ProjectStatsRow from './ProjectStatsRow';
 import ProjectActionsRow from './ProjectActionsRow';
@@ -20,13 +21,26 @@ import UploadMoreModal from './UploadMoreModal';
 const STILL_PROCESSING = new Set(['extracting', 'classifying']);
 const POLL_INTERVAL_MS = 4000;
 
+// The list endpoints (question-papers / syllabi) never include the failure
+// reason for a 'failed' document - only /documents/status does. Merge it in
+// by id so StatusBadge's hover tooltip has something to show.
+function withErrorMessages(docs, statusById) {
+  return docs.map((doc) => ({ ...doc, error: statusById.get(doc.id)?.error }));
+}
+
 async function fetchProjectView(projectId) {
-  const [summary, papers, syllabi] = await Promise.all([
+  const [summary, papers, syllabi, statuses] = await Promise.all([
     getProjectSummary(projectId),
     listProjectQuestionPapers(projectId),
     listProjectSyllabi(projectId),
+    getDocumentsStatus(projectId),
   ]);
-  return { summary, papers, syllabi };
+  const statusById = new Map(statuses.map((doc) => [doc.id, doc]));
+  return {
+    summary,
+    papers: withErrorMessages(papers, statusById),
+    syllabi: withErrorMessages(syllabi, statusById),
+  };
 }
 
 export default function ProjectView() {

@@ -4,7 +4,11 @@ import StatusBadge from '../../components/StatusBadge';
 
 const columns = [
   { key: 'filename', header: 'Document' },
-  { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (row) => <StatusBadge status={row.status} errorMessage={row.error} />,
+  },
   { key: 'total_topics', header: 'Topics' },
   { key: 'total_subtopics', header: 'Subtopics' },
 ];

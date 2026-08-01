@@ -14,7 +14,7 @@ const columns = [
   {
     key: 'status',
     header: 'Status',
-    render: (row) => <StatusBadge status={row.status} />,
+    render: (row) => <StatusBadge status={row.status} errorMessage={row.error} />,
   },
   {
     key: 'subject',
