@@ -14,6 +14,7 @@ from app.database import (
 )
 from app.extraction_service.extract import process_pdf as extract_question_paper
 from app.schemas import DocumentStatus
+from app.services.classification import maybe_start_classification
 from app.services.bbox import expand_content_bboxes
 from app.services.cropping import build_cropped_image
 from app.topic_extraction_service.extract import process_pdf as extract_syllabus
@@ -86,9 +87,12 @@ async def process_question_paper(
 
     On success, each extracted question is saved as its own doc in the
     `questions` collection (with its cropped image), the document moves to
-    "classifying" (extraction done, the not-yet-built classification stage
-    comes next), and the raw extraction result is stored too. On any failure
-    it's marked "failed" with the error.
+    "classifying", and the raw extraction result is stored too. Classification
+    is then kicked off immediately if every syllabus in the project has
+    already finished processing; otherwise it stays "classifying" until the
+    last syllabus completes and triggers it from the other end (see
+    `process_syllabus`). On any extraction failure the document is marked
+    "failed" with the error.
     """
     collection = get_question_papers_collection()
     logger.info("Question paper extraction started: doc_id=%s", doc_id)
@@ -110,17 +114,33 @@ async def process_question_paper(
         error = f"Extraction timed out after {EXTRACTION_TIMEOUT_SECONDS}s"
         logger.error("Question paper extraction timed out: doc_id=%s", doc_id)
         await _set_status(collection, doc_id, DocumentStatus.FAILED, error=error)
+        return
     except Exception as exc:
         logger.exception("Question paper extraction failed: doc_id=%s", doc_id)
         await _set_status(collection, doc_id, DocumentStatus.FAILED, error=str(exc))
+        return
+
+    # Extraction succeeded and the document is already "classifying" at this
+    # point; a failure here (e.g. a transient DB error) must not be allowed
+    # to overwrite that with "failed" -- it's logged and left for the next
+    # trigger (a syllabus completing) to retry instead.
+    try:
+        await maybe_start_classification(project_id)
+    except Exception:
+        logger.exception("Failed to check/start classification: doc_id=%s", doc_id)
 
 
-async def process_syllabus(doc_id: ObjectId, file_path: str) -> None:
+async def process_syllabus(doc_id: ObjectId, file_path: str, project_id: str) -> None:
     """Runs the extraction stage for one syllabus PDF.
 
     On success the document is marked "completed" and stores the raw
-    extraction result (syllabi have no classification stage). On any
-    failure it's marked "failed" with the error.
+    extraction result (syllabi have no classification stage of their own).
+    Since every syllabus in the project must be "completed" before any
+    question paper can be classified, this also checks whether this was the
+    last syllabus the project was waiting on and, if so, kicks off
+    classification for any question papers left pending (see
+    `process_question_paper`). On any failure the document is marked
+    "failed" with the error.
     """
     collection = get_syllabi_collection()
     logger.info("Syllabus extraction started: doc_id=%s", doc_id)
@@ -137,6 +157,13 @@ async def process_syllabus(doc_id: ObjectId, file_path: str) -> None:
         error = f"Extraction timed out after {EXTRACTION_TIMEOUT_SECONDS}s"
         logger.error("Syllabus extraction timed out: doc_id=%s", doc_id)
         await _set_status(collection, doc_id, DocumentStatus.FAILED, error=error)
+        return
     except Exception as exc:
         logger.exception("Syllabus extraction failed: doc_id=%s", doc_id)
         await _set_status(collection, doc_id, DocumentStatus.FAILED, error=str(exc))
+        return
+
+    try:
+        await maybe_start_classification(project_id)
+    except Exception:
+        logger.exception("Failed to check/start classification: doc_id=%s", doc_id)

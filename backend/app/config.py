@@ -19,5 +19,8 @@ class Settings(BaseSettings):
     # bottom, left, right), in the same normalized 0-1000 units as box_2d.
     bbox_expansion: int = 20
 
+    # Number of questions sent to Gemini per classification request.
+    classification_batch_size: int = 20
+
 
 settings = Settings()

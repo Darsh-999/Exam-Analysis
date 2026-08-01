@@ -109,6 +109,8 @@ async def upload_documents(
             "uploaded_at": now,
             "updated_at": now,
         }
+        if doc_type == DocumentType.QUESTION_PAPER:
+            doc["classification_claimed_at"] = None
         collection = _collection_for(doc_type)
         result = await collection.insert_one(doc)
         doc_id = result.inserted_id
@@ -123,7 +125,7 @@ async def upload_documents(
         if doc_type == DocumentType.QUESTION_PAPER:
             schedule(process_question_paper(doc_id, file_path, project_id, pages))
         else:
-            schedule(process_syllabus(doc_id, file_path))
+            schedule(process_syllabus(doc_id, file_path, project_id))
 
         results.append(
             DocumentUploadResult(
