@@ -147,6 +147,9 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Uploaded exam paper / syllabus files
+backend/uploads/
+
 # Environments
 .env
 .envrc

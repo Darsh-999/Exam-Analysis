@@ -20,3 +20,7 @@ def get_question_papers_collection() -> AsyncIOMotorCollection:
 
 def get_syllabi_collection() -> AsyncIOMotorCollection:
     return database["syllabi"]
+
+
+def get_questions_collection() -> AsyncIOMotorCollection:
+    return database["questions"]

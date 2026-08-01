@@ -113,6 +113,7 @@ async def upload_documents(
         result = await collection.insert_one(doc)
         doc_id = result.inserted_id
 
+        pages: list[str] = []
         if Path(file_path).suffix.lower() == ".pdf":
             pages = await asyncio.to_thread(
                 save_pdf_pages, project_id, str(doc_id), file_path
@@ -120,7 +121,7 @@ async def upload_documents(
             await collection.update_one({"_id": doc_id}, {"$set": {"pages": pages}})
 
         if doc_type == DocumentType.QUESTION_PAPER:
-            schedule(process_question_paper(doc_id, file_path))
+            schedule(process_question_paper(doc_id, file_path, project_id, pages))
         else:
             schedule(process_syllabus(doc_id, file_path))
 

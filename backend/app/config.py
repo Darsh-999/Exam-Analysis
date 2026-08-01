@@ -15,5 +15,9 @@ class Settings(BaseSettings):
 
     gemini_api_key: str
 
+    # Amount to expand each extracted bounding box by on every side (top,
+    # bottom, left, right), in the same normalized 0-1000 units as box_2d.
+    bbox_expansion: int = 20
+
 
 settings = Settings()

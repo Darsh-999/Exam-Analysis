@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import (
     get_projects_collection,
     get_question_papers_collection,
+    get_questions_collection,
     get_syllabi_collection,
     get_users_collection,
 )
@@ -21,6 +22,9 @@ async def lifespan(app: FastAPI):
     await get_projects_collection().create_index("owner_id")
     await get_question_papers_collection().create_index([("project_id", 1), ("status", 1)])
     await get_syllabi_collection().create_index([("project_id", 1), ("status", 1)])
+    await get_questions_collection().create_index(
+        [("project_id", 1), ("question_paper_id", 1)]
+    )
     yield
 
 

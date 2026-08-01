@@ -9,3 +9,4 @@ bcrypt==4.2.1
 python-multipart==0.0.20
 google-genai==2.16.0
 pymupdf==1.28.0
+pillow==11.1.0
