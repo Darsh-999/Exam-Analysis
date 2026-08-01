@@ -1,3 +1,6 @@
+# Project specific
+frontend/stitch_examinsight_dashboard
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
