@@ -1,19 +1,27 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { login as loginRequest } from '../../services/authService';
+import { ApiError } from '../../services/apiClient';
 import Button from '../../components/Button';
 
 const inputClasses =
   'h-11 w-full rounded-btn border border-border px-3 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Already have a valid token (e.g. from a previous session) -> skip this
+  // screen entirely, per FRONTEND_DESIGN.md §1.
+  if (isAuthenticated) {
+    return <Navigate to="/projects" replace />;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,11 +34,11 @@ export default function Login() {
 
     setIsSubmitting(true);
     try {
-      // TODO(Phase 3): replace with authService.login(email, password)
-      // hitting POST /api/auth/login and using the real returned token.
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      login('dev-placeholder-token', email);
+      const { access_token: token } = await loginRequest(email, password);
+      login(token, email);
       navigate('/projects', { replace: true });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -8,9 +8,10 @@ const VARIANT_CLASSES = {
 const SIZE_CLASSES = {
   default: 'h-10 px-4 text-sm',
   sm: 'h-8 px-3 text-xs',
+  lg: 'h-12 px-5 text-base',
 };
 
-// variant: 'primary' | 'secondary' — size: 'default' | 'sm'
+// variant: 'primary' | 'secondary' — size: 'default' | 'sm' | 'lg'
 export default function Button({
   variant = 'primary',
   size = 'default',

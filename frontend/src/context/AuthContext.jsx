@@ -2,7 +2,8 @@ import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
-const TOKEN_KEY = 'examinsight_token';
+// Exported so apiClient.js can read the same token without duplicating the key.
+export const TOKEN_KEY = 'examinsight_token';
 const EMAIL_KEY = 'examinsight_email';
 
 // Wrap the app in this once, near the top (see App.jsx). Any component below
