@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import AppShell from '../../components/AppShell';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { useApiData } from '../../hooks/useApiData';
 import { getProject } from '../../services/projectsService';
 import { listProjectQuestionPapers } from '../../services/questionPapersService';
@@ -64,7 +66,7 @@ export default function TrendsView() {
   const { projectId } = useParams();
 
   const fetchData = useCallback(() => fetchTrendsData(projectId), [projectId]);
-  const { data, isLoading, error } = useApiData(fetchData);
+  const { data, isLoading, error, reload } = useApiData(fetchData);
 
   // Built once per data load and reused everywhere a topic needs a color on
   // this page (Topic Frequency bars, Topic Distribution pie, Marks per
@@ -84,9 +86,13 @@ export default function TrendsView() {
     >
       <h1 className="text-2xl font-semibold text-text-primary">Trend & Insights</h1>
 
-      {isLoading && <p className="mt-6 text-sm text-text-muted">Loading trends…</p>}
+      {isLoading && <LoadingState message="Loading trends…" className="mt-6" />}
       {error && (
-        <p className="mt-6 text-sm text-critical">Couldn't load trends: {error.message}</p>
+        <ErrorState
+          message={`Couldn't load trends: ${error.message}`}
+          onRetry={reload}
+          className="mt-6"
+        />
       )}
 
       {!isLoading && !error && data && (

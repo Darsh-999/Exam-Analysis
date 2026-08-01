@@ -67,7 +67,7 @@ export default function QuestionsFilterBar({
         ))}
       </div>
 
-      <div className="flex h-10 min-w-[220px] flex-1 items-center rounded-btn border border-border bg-surface px-3">
+      <div className="flex h-10 min-w-[220px] flex-1 items-center rounded-btn border border-border bg-surface px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         <Search className="h-4 w-4 text-text-muted" />
         <input
           type="text"

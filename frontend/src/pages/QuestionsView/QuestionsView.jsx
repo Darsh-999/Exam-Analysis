@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { HelpCircle } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { useApiData } from '../../hooks/useApiData';
 import { getProject } from '../../services/projectsService';
 import { listProjectQuestions } from '../../services/questionsService';
@@ -36,7 +38,7 @@ export default function QuestionsView() {
   const [keyword, setKeyword] = useState('');
 
   const fetchData = useCallback(() => fetchQuestionsData(projectId), [projectId]);
-  const { data, isLoading, error } = useApiData(fetchData);
+  const { data, isLoading, error, reload } = useApiData(fetchData);
 
   const subjectOptions = useMemo(() => {
     if (!data) return [];
@@ -91,9 +93,13 @@ export default function QuestionsView() {
     >
       <h1 className="text-2xl font-semibold text-text-primary">Questions</h1>
 
-      {isLoading && <p className="mt-6 text-sm text-text-muted">Loading questions…</p>}
+      {isLoading && <LoadingState message="Loading questions…" className="mt-6" />}
       {error && (
-        <p className="mt-6 text-sm text-critical">Couldn't load questions: {error.message}</p>
+        <ErrorState
+          message={`Couldn't load questions: ${error.message}`}
+          onRetry={reload}
+          className="mt-6"
+        />
       )}
 
       {!isLoading && !error && data && (

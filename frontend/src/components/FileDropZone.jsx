@@ -48,7 +48,7 @@ export default function FileDropZone({ label, helperText, accept, files, onFiles
         }}
         onDragLeave={() => setIsDragActive(false)}
         onDrop={handleDrop}
-        className={`flex h-[120px] cursor-pointer flex-col items-center justify-center gap-1 rounded-btn border-2 border-dashed px-4 text-center transition-colors ${
+        className={`flex h-[120px] cursor-pointer flex-col items-center justify-center gap-1 rounded-btn border-2 border-dashed px-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
           isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
         }`}
       >

@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useApiData } from '../../hooks/useApiData';
 import { getQuestionPaperTopicDistribution } from '../../services/questionPapersService';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import ChartPanel from './ChartPanel';
 import { OTHER_COLOR, OTHER_LABEL } from './chartColors';
 
@@ -20,7 +22,7 @@ export default function TopicDistributionChart({ papers, topicColorMap }) {
       ? getQuestionPaperTopicDistribution(selectedPaperId)
       : Promise.resolve(null);
   }, [selectedPaperId]);
-  const { data: chart, isLoading, error } = useApiData(fetchChart);
+  const { data: chart, isLoading, error, reload } = useApiData(fetchChart);
 
   // "Unallocated" always stays its own distinct wedge (explicit in the spec
   // - it's a coverage signal, not noise to hide). Every other topic beyond
@@ -60,8 +62,8 @@ export default function TopicDistributionChart({ papers, topicColorMap }) {
         ))}
       </select>
 
-      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
-      {error && <p className="text-sm text-critical">Couldn't load this chart: {error.message}</p>}
+      {isLoading && <LoadingState />}
+      {error && <ErrorState message={`Couldn't load this chart: ${error.message}`} onRetry={reload} />}
 
       {chart && (
         <ChartPanel title={chart.title} description={chart.description}>

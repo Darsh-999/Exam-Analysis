@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useApiData } from '../../hooks/useApiData';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import ChartPanel from './ChartPanel';
 import MetricToggle from './MetricToggle';
 import { createColorAssigner } from './chartColors';
@@ -17,7 +19,7 @@ export default function FrequencyPanel({ projectId, fetcher, colorMap }) {
   const [metric, setMetric] = useState('count');
 
   const fetchChart = useCallback(() => fetcher(projectId, metric), [projectId, fetcher, metric]);
-  const { data: chart, isLoading, error } = useApiData(fetchChart);
+  const { data: chart, isLoading, error, reload } = useApiData(fetchChart);
 
   const visible = chart ? chart.data.slice(0, MAX_BARS) : [];
   const hiddenCount = chart ? Math.max(0, chart.data.length - MAX_BARS) : 0;
@@ -25,8 +27,8 @@ export default function FrequencyPanel({ projectId, fetcher, colorMap }) {
 
   return (
     <div className="flex-1">
-      {isLoading && <p className="text-sm text-text-muted">Loading…</p>}
-      {error && <p className="text-sm text-critical">Couldn't load this chart: {error.message}</p>}
+      {isLoading && <LoadingState />}
+      {error && <ErrorState message={`Couldn't load this chart: ${error.message}`} onRetry={reload} />}
 
       {chart && (
         <ChartPanel

@@ -22,8 +22,24 @@ export default function DataTable({ columns, data, keyField = 'id', onRowClick }
             <tr
               key={row[keyField]}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
+              // Rows that navigate somewhere need to be reachable and
+              // activatable from the keyboard too, not just a mouse click.
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? 'button' : undefined}
+              onKeyDown={
+                onRowClick
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRowClick(row);
+                      }
+                    }
+                  : undefined
+              }
               className={`h-14 border-b border-border last:border-0 ${
-                onRowClick ? 'cursor-pointer hover:bg-background' : ''
+                onRowClick
+                  ? 'cursor-pointer hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary'
+                  : ''
               }`}
             >
               {columns.map((col) => (

@@ -4,6 +4,8 @@ import { Plus, FolderOpen } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import Button from '../../components/Button';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { useApiData } from '../../hooks/useApiData';
 import { listProjects, getProjectSummary } from '../../services/projectsService';
 import ProjectsStatsRow from './ProjectsStatsRow';
@@ -34,7 +36,7 @@ export default function ProjectsDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProjects = useCallback(() => fetchProjectsWithCounts(), []);
-  const { data: projects, isLoading, error } = useApiData(fetchProjects);
+  const { data: projects, isLoading, error, reload } = useApiData(fetchProjects);
 
   const filteredProjects = useMemo(() => {
     if (!projects) return [];
@@ -56,10 +58,14 @@ export default function ProjectsDashboard() {
         <ProjectsStatsRow />
       </div>
 
-      {isLoading && <p className="mt-8 text-sm text-text-muted">Loading projects…</p>}
+      {isLoading && <LoadingState message="Loading projects…" className="mt-8" />}
 
       {error && (
-        <p className="mt-8 text-sm text-critical">Couldn't load projects: {error.message}</p>
+        <ErrorState
+          message={`Couldn't load projects: ${error.message}`}
+          onRetry={reload}
+          className="mt-8"
+        />
       )}
 
       {!isLoading && !error && projects && projects.length === 0 && (

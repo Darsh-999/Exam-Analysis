@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { ListTree } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { useApiData } from '../../hooks/useApiData';
 import { getProject } from '../../services/projectsService';
 import { listProjectSyllabi, getSyllabusTopics } from '../../services/syllabiService';
@@ -25,7 +27,12 @@ export default function TopicsView() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchBase = useCallback(() => fetchProjectAndSyllabi(projectId), [projectId]);
-  const { data: baseData, isLoading: isBaseLoading, error: baseError } = useApiData(fetchBase);
+  const {
+    data: baseData,
+    isLoading: isBaseLoading,
+    error: baseError,
+    reload: reloadBase,
+  } = useApiData(fetchBase);
 
   const requestedSyllabusId = searchParams.get('syllabusId');
   const selectedSyllabus = useMemo(() => {
@@ -37,8 +44,12 @@ export default function TopicsView() {
   const fetchContent = useCallback(() => {
     return selectedSyllabus ? getSyllabusTopics(selectedSyllabus.id) : Promise.resolve(null);
   }, [selectedSyllabus]);
-  const { data: content, isLoading: isContentLoading, error: contentError } =
-    useApiData(fetchContent);
+  const {
+    data: content,
+    isLoading: isContentLoading,
+    error: contentError,
+    reload: reloadContent,
+  } = useApiData(fetchContent);
 
   return (
     <AppShell
@@ -50,9 +61,13 @@ export default function TopicsView() {
     >
       <h1 className="text-2xl font-semibold text-text-primary">Topics</h1>
 
-      {isBaseLoading && <p className="mt-6 text-sm text-text-muted">Loading topics…</p>}
+      {isBaseLoading && <LoadingState message="Loading topics…" className="mt-6" />}
       {baseError && (
-        <p className="mt-6 text-sm text-critical">Couldn't load topics: {baseError.message}</p>
+        <ErrorState
+          message={`Couldn't load topics: ${baseError.message}`}
+          onRetry={reloadBase}
+          className="mt-6"
+        />
       )}
 
       {!isBaseLoading && !baseError && baseData && baseData.syllabi.length === 0 && (
@@ -75,11 +90,13 @@ export default function TopicsView() {
             {selectedSyllabus.total_topics} topics · {selectedSyllabus.total_subtopics} subtopics
           </p>
 
-          {isContentLoading && <p className="mt-4 text-sm text-text-muted">Loading topics…</p>}
+          {isContentLoading && <LoadingState message="Loading topics…" className="mt-4" />}
           {contentError && (
-            <p className="mt-4 text-sm text-critical">
-              Couldn't load topics: {contentError.message}
-            </p>
+            <ErrorState
+              message={`Couldn't load topics: ${contentError.message}`}
+              onRetry={reloadContent}
+              className="mt-4"
+            />
           )}
 
           {!isContentLoading && !contentError && content && content.content.length === 0 && (

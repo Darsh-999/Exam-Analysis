@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FileText, BookOpen } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import EmptyState from '../../components/EmptyState';
+import LoadingState from '../../components/LoadingState';
+import ErrorState from '../../components/ErrorState';
 import { useApiData } from '../../hooks/useApiData';
+import { usePolling } from '../../hooks/usePolling';
 import { getProjectSummary } from '../../services/projectsService';
 import { listProjectQuestionPapers } from '../../services/questionPapersService';
 import { listProjectSyllabi } from '../../services/syllabiService';
@@ -39,11 +42,7 @@ export default function ProjectView() {
 
   // Keep the stat cards and tables live while anything is still
   // extracting/classifying; stop as soon as everything settles.
-  useEffect(() => {
-    if (processingCount === 0) return;
-    const interval = setInterval(reload, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [processingCount, reload]);
+  usePolling(processingCount > 0, reload, POLL_INTERVAL_MS);
 
   return (
     <AppShell
@@ -52,10 +51,10 @@ export default function ProjectView() {
         { label: data?.summary.name ?? projectId },
       ]}
     >
-      {isLoading && <p className="text-sm text-text-muted">Loading project…</p>}
+      {isLoading && <LoadingState message="Loading project…" />}
 
       {error && (
-        <p className="text-sm text-critical">Couldn't load this project: {error.message}</p>
+        <ErrorState message={`Couldn't load this project: ${error.message}`} onRetry={reload} />
       )}
 
       {!isLoading && !error && data && (
