@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -14,3 +16,18 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class ProjectCreate(BaseModel):
+    name: str = Field(min_length=1)
+    description: str | None = None
+
+
+class ProjectOut(BaseModel):
+    id: str
+    name: str
+    description: str | None = None
+    owner_id: str
+    owner_email: EmailStr
+    created_at: datetime
+    is_owner: bool

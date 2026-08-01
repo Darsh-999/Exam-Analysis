@@ -8,3 +8,7 @@ database = client[settings.mongodb_db_name]
 
 def get_users_collection() -> AsyncIOMotorCollection:
     return database["users"]
+
+
+def get_projects_collection() -> AsyncIOMotorCollection:
+    return database["projects"]
