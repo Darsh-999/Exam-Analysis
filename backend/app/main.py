@@ -11,7 +11,7 @@ from app.database import (
     get_syllabi_collection,
     get_users_collection,
 )
-from app.routers import auth, documents, projects
+from app.routers import analytics, auth, documents, projects, question_papers, questions, syllabi
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -25,6 +25,8 @@ async def lifespan(app: FastAPI):
     await get_questions_collection().create_index(
         [("project_id", 1), ("question_paper_id", 1)]
     )
+    await get_question_papers_collection().create_index("extracted_data.subject_name")
+    await get_syllabi_collection().create_index("extracted_data.content.topic")
     yield
 
 
@@ -40,6 +42,10 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(documents.router)
+app.include_router(syllabi.router)
+app.include_router(question_papers.router)
+app.include_router(questions.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")
