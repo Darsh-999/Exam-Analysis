@@ -1,8 +1,41 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens from docs/DESIGN.md + docs/FRONTEND_DESIGN.md §0.1-0.3.
+ * Tailwind v4 reads this @theme block and turns each variable into a
+ * utility class, e.g. --color-primary becomes `bg-primary` / `text-primary`.
+ */
+@theme {
+  --color-background: #f9f7f2;
+  --color-surface: #ffffff;
+  --color-nav: #141414;
+
+  --color-primary: #ea5b2e;
+  --color-primary-amber: #f5a623;
+
+  --color-text-primary: #171512;
+  --color-text-secondary: #6e6b64;
+  --color-text-muted: #a6a39b;
+
+  --color-border: #e7e3da;
+
+  --color-success: #0ca30c;
+  --color-warning: #f5a623;
+  --color-critical: #d03b3b;
+
+  --radius-btn: 0.5rem; /* 8px */
+  --radius-card: 0.625rem; /* 10px */
+  --radius-modal: 0.75rem; /* 12px */
+
+  --spacing-nav: 4rem; /* 64px, top nav height */
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  --font-sans: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-  background-color: #f9f7f2;
-  color: #171512;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
