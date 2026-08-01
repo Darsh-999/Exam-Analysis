@@ -11,5 +11,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
 
+    upload_dir: str = "uploads"
+
+    gemini_api_key: str
+
 
 settings = Settings()

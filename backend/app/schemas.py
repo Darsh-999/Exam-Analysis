@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -31,3 +32,37 @@ class ProjectOut(BaseModel):
     owner_email: EmailStr
     created_at: datetime
     is_owner: bool
+
+
+class DocumentType(str, Enum):
+    QUESTION_PAPER = "question_paper"
+    SYLLABUS = "syllabus"
+
+
+class DocumentStatus(str, Enum):
+    EXTRACTING = "extracting"
+    CLASSIFYING = "classifying"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class DocumentOut(BaseModel):
+    id: str
+    project_id: str
+    filename: str
+    doc_type: DocumentType
+    status: DocumentStatus
+    error: str | None = None
+    uploaded_at: datetime
+    updated_at: datetime
+
+
+class DocumentUploadResult(BaseModel):
+    id: str
+    filename: str
+    doc_type: DocumentType
+
+
+class DocumentUploadResponse(BaseModel):
+    message: str
+    documents: list[DocumentUploadResult]

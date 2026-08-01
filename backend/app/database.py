@@ -12,3 +12,11 @@ def get_users_collection() -> AsyncIOMotorCollection:
 
 def get_projects_collection() -> AsyncIOMotorCollection:
     return database["projects"]
+
+
+def get_question_papers_collection() -> AsyncIOMotorCollection:
+    return database["question_papers"]
+
+
+def get_syllabi_collection() -> AsyncIOMotorCollection:
+    return database["syllabi"]
