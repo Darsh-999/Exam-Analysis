@@ -69,4 +69,12 @@ async def extract_headers(boxes: list[BoxRecord]) -> ExamHeaders:
         "Sending header extraction request to Qwen (%d composite image(s))",
         len(composite_images),
     )
-    return await call_structured(messages, ExamHeaders, MAX_TOKENS)
+    try:
+        return await call_structured(messages, ExamHeaders, MAX_TOKENS)
+    except Exception:
+        # Mirrors extract_questions' per-batch resilience: a failed header
+        # call (timeout, malformed JSON, ...) must not take down the whole
+        # PDF's extraction along with it -- the questions themselves are
+        # extracted independently and are worth keeping.
+        logger.exception("Header extraction failed -- falling back to empty headers")
+        return EMPTY_HEADERS
