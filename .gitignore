@@ -1,5 +1,6 @@
 # Project specific
 frontend/stitch_examinsight_dashboard
+backend/debug_output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
