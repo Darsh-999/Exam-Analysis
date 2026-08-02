@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import UpdateOne
 
-from app.classification_service.classify import classify_batch
 from app.classification_service.postprocess import resolve_question_mappings
 from app.classification_service.preprocess import (
     assign_question_ids,
@@ -18,17 +17,13 @@ from app.database import (
     get_questions_collection,
     get_syllabi_collection,
 )
+from app.local_classification_service.classify import classify_batch
 from app.schemas import DocumentStatus
 
 logger = logging.getLogger(__name__)
 
-# Safety net so one hung Gemini call can't leave a document stuck in
-# "classifying" forever; that batch just comes back empty (see
-# _classify_batch_safe) instead of blocking the rest.
 CLASSIFICATION_TIMEOUT_SECONDS = 120
 
-# Keeps strong references to in-flight classification tasks, mirroring
-# app.services.processing._running_tasks.
 _running_tasks: set[asyncio.Task] = set()
 
 
@@ -46,11 +41,7 @@ async def _set_status(collection, doc_id: ObjectId, doc_status: DocumentStatus, 
 
 
 async def _syllabi_ready(project_id: str) -> bool:
-    """All syllabi in the project must have finished processing (status
-    "completed") before any question paper in it can be classified. A
-    syllabus still "extracting" or one that ended up "failed" both hold
-    classification back — this returns False either way, and the project
-    simply needs a syllabus re-upload to get unstuck in the failed case.
+    """All syllabi in the project must have finished processing
     """
     syllabi = get_syllabi_collection()
     total = await syllabi.count_documents({"project_id": project_id})
@@ -64,14 +55,9 @@ async def _syllabi_ready(project_id: str) -> bool:
 
 async def maybe_start_classification(project_id: str) -> None:
     """Looks for question papers in this project waiting on classification
-    (status "classifying") and schedules each one, but only once every
-    syllabus in the project is "completed".
 
     Meant to be called both right after a question paper finishes
-    extraction and right after a syllabus finishes processing, since either
-    one could be the event that makes the project ready. Safe to call
-    repeatedly or concurrently: claiming a paper is an atomic
-    find-and-update, so it is only ever scheduled once.
+    extraction and right after a syllabus finishes processing
     """
     if not await _syllabi_ready(project_id):
         return
@@ -101,11 +87,9 @@ async def maybe_start_classification(project_id: str) -> None:
 async def _classify_batch_safe(
     batch: list[dict], topics_and_subtopics: list[dict], doc_id: ObjectId
 ) -> list[dict]:
-    """Runs one batch through Gemini, turning any failure (timeout, API
-    error, malformed response) into an empty result instead of raising, so
-    one bad batch can't stop the rest of the document's questions from
-    being classified. The affected questions simply keep their default
-    empty `topic` list.
+    """Runs one batch through the local Qwen model (via vLLM), turning any
+    failure (timeout, connection error, malformed response) into an empty
+    result instead of raising
     """
     try:
         return await asyncio.wait_for(
@@ -125,17 +109,9 @@ async def _classify_batch_safe(
 
 async def classify_question_paper(doc_id: ObjectId, project_id: str) -> None:
     """Runs the classification stage for one exam paper: maps each of its
-    questions to syllabus topics/subtopics via Gemini, in concurrent
-    batches, and writes the results onto each question's `topic` field.
+    questions to syllabus topics/subtopics in concurrent batches, and 
+    writes the results onto each question's `topic` field.
 
-    Always finishes by marking the document "completed" — a question with
-    no confident match, a question the LLM skipped, a hallucinated ID, or a
-    batch that errored out all just leave that question's `topic` as an
-    empty list (its default); the status only reflects that classification
-    ran, not that every question found a match. The document is only
-    marked "failed" for a systemic problem (e.g. the DB reads themselves
-    failing), not for per-question/per-batch issues, which are handled and
-    logged instead.
     """
     logger.info("Classification started: doc_id=%s", doc_id)
     question_papers = get_question_papers_collection()
