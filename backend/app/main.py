@@ -1,8 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.database import (
     get_projects_collection,
@@ -48,16 +51,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(projects.router)
-app.include_router(documents.router)
-app.include_router(syllabi.router)
-app.include_router(question_papers.router)
-app.include_router(questions.router)
-app.include_router(analytics.router)
-app.include_router(trends.router)
+
+api_router = APIRouter(prefix="/api")
+api_router.include_router(auth.router)
+api_router.include_router(projects.router)
+api_router.include_router(documents.router)
+api_router.include_router(syllabi.router)
+api_router.include_router(question_papers.router)
+api_router.include_router(questions.router)
+api_router.include_router(analytics.router)
+api_router.include_router(trends.router)
+
+app.include_router(api_router)
 
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+_frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if _frontend_dist.is_dir():
+    app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        candidate = _frontend_dist / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(_frontend_dist / "index.html")

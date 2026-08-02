@@ -12,18 +12,18 @@ from app.database import (
     get_questions_collection,
     get_syllabi_collection,
 )
-from app.extraction_service.extract import process_pdf as extract_question_paper
+from app.local_extraction_service.extract import process_pdf as extract_question_paper
+from app.local_topic_extraction_service.extract import process_pdf as extract_syllabus
 from app.schemas import DocumentStatus
 from app.services.classification import maybe_start_classification
 from app.services.bbox import expand_content_bboxes
 from app.services.cropping import build_cropped_image
-from app.topic_extraction_service.extract import process_pdf as extract_syllabus
 
 logger = logging.getLogger(__name__)
 
 # Safety net so a hung call can't leave a document stuck in
 # "extracting" forever.
-EXTRACTION_TIMEOUT_SECONDS = 180
+EXTRACTION_TIMEOUT_SECONDS = 600
 
 # Keeps strong references to in-flight processing tasks so they aren't garbage
 # collected mid-run, and lets every uploaded file process concurrently instead
@@ -59,25 +59,49 @@ async def _save_questions(
 ) -> None:
     """Inserts one `questions` doc per extracted question and stamps each
     entry in `content` with the new question's id, for cross-referencing.
+
+    Builds every question doc first and inserts them in one `insert_many`
+    rather than one `insert_one` per iteration -- a page-image crop failing
+    partway through content (e.g. a missing/corrupt page render) used to
+    leave the earlier questions already committed to the DB while the
+    document still got marked "failed", an inconsistent partial state that a
+    re-upload wouldn't clean up. A crop failure now just saves that one
+    question without an image instead of losing the rest of the document.
     """
+    if not content:
+        return
+
     questions_collection = get_questions_collection()
+    question_docs = []
     for question in content:
-        cropped_image = await asyncio.to_thread(
-            build_cropped_image, question["bbox"], page_paths
+        try:
+            cropped_image = await asyncio.to_thread(
+                build_cropped_image, question["bbox"], page_paths
+            )
+        except Exception:
+            logger.exception(
+                "doc_id=%s failed to crop image for question_number=%r -- saving without one",
+                doc_id, question.get("question_number"),
+            )
+            cropped_image = ""
+
+        question_docs.append(
+            {
+                "project_id": project_id,
+                "question_paper_id": str(doc_id),
+                "question_number": question["question_number"],
+                "question": question["question"],
+                "mark": question["mark"],
+                "bbox": question["bbox"],
+                "cropped_image": cropped_image,
+                "topic": [],
+                "created_at": datetime.now(timezone.utc),
+            }
         )
-        question_doc = {
-            "project_id": project_id,
-            "question_paper_id": str(doc_id),
-            "question_number": question["question_number"],
-            "question": question["question"],
-            "mark": question["mark"],
-            "bbox": question["bbox"],
-            "cropped_image": cropped_image,
-            "topic": [],
-            "created_at": datetime.now(timezone.utc),
-        }
-        result = await questions_collection.insert_one(question_doc)
-        question["question_id"] = str(result.inserted_id)
+
+    result = await questions_collection.insert_many(question_docs)
+    for question, inserted_id in zip(content, result.inserted_ids):
+        question["question_id"] = str(inserted_id)
 
 
 async def process_question_paper(

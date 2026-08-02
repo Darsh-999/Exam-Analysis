@@ -36,8 +36,9 @@ def resolve_question_mappings(
             topic_info = topic_lookup.get(topic_id)
             if topic_info is None:
                 logger.error(
-                    "doc_id=%s question_id=%s hallucinated topic_id=%r ignored",
-                    doc_id, question_id, topic_id,
+                    "doc_id=%s question_id=%s hallucinated topic_id=%r ignored "
+                    "(mapping=%r)",
+                    doc_id, question_id, topic_id, mapping,
                 )
                 continue
 
@@ -50,16 +51,21 @@ def resolve_question_mappings(
                 },
             )
 
-            for subtopic_id in mapping.get("subtopic_ids", []):
-                name = subtopic_lookup.get(subtopic_id)
-                if name is None:
-                    logger.error(
-                        "doc_id=%s question_id=%s hallucinated subtopic_id=%r ignored",
-                        doc_id, question_id, subtopic_id,
-                    )
-                    continue
-                if name not in entry["subtopics"]:
-                    entry["subtopics"].append(name)
+            # Subtopics are no longer sent to the model (see
+            # local_classification_service.classify._strip_subtopics), so
+            # subtopic_ids are never resolved against subtopic_lookup here --
+            # `entry["subtopics"]` is always left empty. This is a hard
+            # guarantee rather than trusting the model to comply with the
+            # prompt: any subtopic_ids returned anyway are unexpected model
+            # behavior and are logged, not resolved.
+            subtopic_ids = mapping.get("subtopic_ids") or []
+            if subtopic_ids:
+                logger.warning(
+                    "doc_id=%s question_id=%s topic_id=%s model returned "
+                    "subtopic_ids despite subtopics being excluded from the "
+                    "prompt, ignoring: %r",
+                    doc_id, question_id, topic_id, subtopic_ids,
+                )
 
         resolved[question_id] = list(topics_by_id.values())
 

@@ -4,9 +4,27 @@ React + Vite + Tailwind CSS frontend for ExamInsight.
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20+ and npm — Vite 8 (via rolldown) 
 - The backend running locally (see [`../backend/README.md`](../backend/README.md)) — the frontend
   has no data of its own, every screen calls the backend API
+
+## Installing Node.js (fresh machine / RunPod pod)
+
+Runpods default `apt` package is `nodejs 18.19.1`, which is too old for this project Install Node 22 LTS
+
+```
+curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
+sudo bash /tmp/nodesource_setup.sh
+sudo apt-get install -y nodejs
+node -v   # v22.x
+npm -v
+```
+
+If `nodejs`/`npm` were already installed from Ubuntu's default repo, remove them first
+
+```
+sudo apt-get remove -y nodejs npm
+```
 
 ## Setup
 
@@ -22,7 +40,7 @@ npm run dev
 ```
 
 Opens on http://localhost:5173 (Vite picks the next free port if that one's taken). Every
-`/api/...` call is proxied to the backend at `http://127.0.0.1:8000` (see `vite.config.js`) — make
+`/api/...` call is proxied to the backend at `http://127.0.0.1:8080` (see `vite.config.js`) — make
 sure the backend is running first, or screens will show a "couldn't load" error.
 
 ## Build for production

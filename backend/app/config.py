@@ -13,14 +13,40 @@ class Settings(BaseSettings):
 
     upload_dir: str = "uploads"
 
-    gemini_api_key: str
-
-    # Amount to expand each extracted bounding box by on every side (top,
-    # bottom, left, right), in the same normalized 0-1000 units as box_2d.
+    # Amount to expand each extracted bounding box by on every side
     bbox_expansion: int = 20
 
-    # Number of questions sent to Gemini per classification request.
+    # Number of questions sent per classification request
     classification_batch_size: int = 20
+
+    # -- Local extraction pipeline (DocLayout + Qwen via vLLM) --
+
+    vllm_base_url: str = "http://localhost:8000/v1"
+    vllm_model_name: str = "model"
+    vllm_request_timeout_seconds: int = 600
+
+    # Must match the --max-model-len the vLLM server was launched with (see
+    # README.md) -- used to size how many output tokens a request can ask
+    # for without vLLM rejecting it for exceeding the total context window.
+    vllm_max_context_tokens: int = 8192
+
+    # Max number of concurrent Qwen requests in flight at once
+    qwen_max_concurrency: int = 3
+
+    # Path to the DocLayout YOLO model weights
+    doclayout_model_path: str = "models/doclayout_yolo_docstructbench.pt"
+
+    # Max number of concurrent DocLayout GPU inferences
+    doclayout_gpu_concurrency: int = 1
+
+    # Header metadata first N boxes
+    header_bbox_limit: int = 20
+    
+    # Boxes joined per composite header image
+    header_boxes_per_image: int = 4
+
+    # Number of consecutive cropped boxes
+    question_batch_size: int = 5
 
 
 settings = Settings()

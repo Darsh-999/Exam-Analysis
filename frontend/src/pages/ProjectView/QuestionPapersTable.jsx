@@ -32,21 +32,6 @@ const columns = [
     header: 'Total Marks',
     render: (row) => numericCell(row, 'total_marks'),
   },
-  {
-    key: 'total_allocated_questions',
-    header: 'Allocated',
-    render: (row) => numericCell(row, 'total_allocated_questions'),
-  },
-  {
-    key: 'total_unallocated_questions',
-    header: 'Unallocated',
-    render: (row) => numericCell(row, 'total_unallocated_questions'),
-  },
-  {
-    key: 'total_multi_allocated_questions',
-    header: 'Multi-allocated',
-    render: (row) => numericCell(row, 'total_multi_allocated_questions'),
-  },
 ];
 
 // papers: QuestionPaperSummaryOut[] from GET /projects/:id/question-papers
