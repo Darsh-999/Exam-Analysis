@@ -29,9 +29,8 @@ class QuestionMapping(BaseModel):
 
 class ClassificationBatchResult(BaseModel):
     """Wraps the per-question mappings in an object -- vLLM's structured
-    output (like the OpenAI API it mirrors) requires an object at the schema
-    root, not a bare array, unlike the Gemini `response_schema` this service
-    replaces.
+    output (like the OpenAI API it mirrors) requires an object at the
+    schema root, not a bare array.
     """
 
     results: list[QuestionMapping]

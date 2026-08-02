@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 def _assemble_content(
     questions: list[Question], box_lookup: dict[str, BoxRecord]
 ) -> list[dict]:
-    """Renames Qwen's per-question fields onto the same shape
-    `app.extraction_service.extract.ExamData.content[]` uses
-    (`question_number`, `question`, `mark`, `bbox: [{page_index, box_2d}]`),
-    plus additive fields (`image_ids`, `incomplete_info`, `incomplete_reason`,
-    `confidence`) that ride along unused until they're needed -- see
+    """Shapes Qwen's per-question output into the `content[]` entries stored
+    on the question paper (`question_number`, `question`, `mark`,
+    `bbox: [{page_index, box_2d}]`), plus additive fields (`image_ids`,
+    `incomplete_info`, `incomplete_reason`, `confidence`) that ride along
+    unused until they're needed -- see
     `app.local_extraction_service.reconciliation`.
     """
     content = []
@@ -48,18 +48,13 @@ def _assemble_content(
 async def process_pdf(pdf_bytes: bytes) -> dict:
     """Runs the full DocLayout + Qwen pipeline on one exam paper PDF.
 
-    Returns a dict shaped exactly like
-    `app.extraction_service.extract.ExamData.model_dump()`
-    (`degree`, `subject_name`, `subject_code`, `exam_date`, `semester`,
-    `total_marks`, `content: [{question_number, question, mark, bbox}]`),
-    plus additive fields the Gemini pipeline doesn't produce: each `content`
-    entry also carries `image_ids`/`incomplete_info`/`incomplete_reason`/
-    `confidence`, and a top-level `boxes` list carries every detected box's
-    `image_base64` and classified `content_type`/`label`.
-
-    This is the intended swap-in point for
-    `app.extraction_service.extract.process_pdf` -- same signature, same
-    required output shape.
+    Returns a dict with `degree`, `subject_name`, `subject_code`,
+    `exam_date`, `semester`, `total_marks`, and
+    `content: [{question_number, question, mark, bbox}]`, plus additive
+    fields: each `content` entry also carries
+    `image_ids`/`incomplete_info`/`incomplete_reason`/`confidence`, and a
+    top-level `boxes` list carries every detected box's `image_base64` and
+    classified `content_type`/`label`.
     """
     boxes = await run_doclayout(pdf_bytes)
 

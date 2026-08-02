@@ -19,17 +19,12 @@ MAX_TOKENS = 4096
 async def process_pdf(pdf_bytes: bytes) -> dict:
     """Runs the text-based Qwen pipeline on one syllabus PDF.
 
-    Returns a dict shaped exactly like
-    `app.topic_extraction_service.extract.SyllabusSchema.model_dump()`
-    (`degree`, `subject_name`, `subject_code`, `semester`, `total_marks`,
-    `content: [{topic, subtopics, weightage, hours}]`).
-
-    This is the intended swap-in point for
-    `app.topic_extraction_service.extract.process_pdf` -- same signature,
-    same required output shape. Raises on any failure (no extractable text,
-    vLLM timeout/error, malformed output) -- the caller's existing
-    extraction-failure handling marks the syllabus `failed` instead of
-    crashing the whole process.
+    Returns a dict with `degree`, `subject_name`, `subject_code`,
+    `semester`, `total_marks`, and
+    `content: [{topic, subtopics, weightage, hours}]`. Raises on any failure
+    (no extractable text, vLLM timeout/error, malformed output) -- the
+    caller's existing extraction-failure handling marks the syllabus
+    `failed` instead of crashing the whole process.
     """
     # PyMuPDF is a synchronous C extension -- run it off the event loop so one
     # PDF's parsing can't stall every other concurrent request/task.

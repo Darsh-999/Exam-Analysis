@@ -13,8 +13,6 @@ class Settings(BaseSettings):
 
     upload_dir: str = "uploads"
 
-    gemini_api_key: str
-
     # Amount to expand each extracted bounding box by on every side
     bbox_expansion: int = 20
 
