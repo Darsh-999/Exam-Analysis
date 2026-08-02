@@ -14,11 +14,21 @@ time -- earlier or later material may exist outside what you can see right now.
    - `diagram`: a figure/drawing referenced by a question, not question text itself.
    - `table`: a table referenced by a question.
    - `mcq`: multiple-choice options.
-   - `marks_info`: a marks/instructions line with no question text of its own.
+   - `marks_info`: a marks/instructions line with no question text of its own -- e.g.
+     "Total Marks: 70", "Instructions:", "Attempt all questions.", "Make suitable
+     assumptions wherever necessary.", "Figures to the right indicate full marks.",
+     "Answer any 5 out of 7.", section headers like "Section A", etc.
    - `useless`: headers, footers, page numbers, blank space, logos -- anything with no
      question content.
    Set `label` only when it helps identify the image (e.g. the question number it
    belongs to); otherwise `""`.
+
+   **Administrative text is never a question.** Lines like the `marks_info` examples
+   above are paper-level or section-level notices, not question content. Classify
+   them as `marks_info` (or `useless`), never as `question` or
+   `question_continuation` -- and never let them produce an entry in `questions[]`,
+   whether they appear alone on an image, above a question, or interleaved with one.
+   Extract only the actual question text; drop the surrounding instructions.
 
 2. **Every distinct numbered/lettered item is its own question.** MCQ,
    fill-in-the-blank, true/false, match-the-following, short answer, long answer,
@@ -32,7 +42,15 @@ time -- earlier or later material may exist outside what you can see right now.
    kind. Reproduce math with ordinary characters/Unicode as printed (`x^2`, `dy/dx`,
    `∫`, `√x`). Strip the label out of `text` (it belongs only in `question_number`).
    Include all options for MCQs. Exclude diagrams/tables/mark indicators from `text`
-   -- reference them via `image_ids` instead.
+   -- reference them via `image_ids` instead. Also exclude any administrative or
+   instructional wording (marks totals, "Instructions:", "Attempt all questions.",
+   "Make suitable assumptions wherever necessary.", etc.) that appears next to or
+   inside the question -- keep only the actual question content.
+
+   **`text` must never be empty.** If, once diagrams/tables/mark indicators and
+   administrative text are excluded, nothing recognizable as an actual question
+   remains, do not create a `questions[]` entry at all. An entry with `text: ""`
+   should never be produced -- empty `text` means the entry shouldn't exist.
 
 5. **`marks`**: pull from patterns like "(7 marks)", "[4]", "7M", "CO2 [3]". If
    sub-questions share one stated total, split evenly (e.g. "Q1 (14 marks)" with
@@ -59,7 +77,9 @@ time -- earlier or later material may exist outside what you can see right now.
 
 9. **Missing values.** Use `""` for any string field that can't be determined, and `0`
    for any numeric field that can't be determined. Never use `null`, `-1`, or
-   `"Not Mentioned"`.
+   `"Not Mentioned"`. **Exception:** `text` must never be `""` -- see rule 4. If a
+   question's text can't be determined, omit that `questions[]` entry entirely rather
+   than emitting one with empty `text`.
 
 10. **Output format.** Return only the JSON object matching the schema: no preamble,
     no explanation, no extra keys.

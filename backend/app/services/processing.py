@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Safety net so a hung call can't leave a document stuck in
 # "extracting" forever.
-EXTRACTION_TIMEOUT_SECONDS = 180
+EXTRACTION_TIMEOUT_SECONDS = 600
 
 # Keeps strong references to in-flight processing tasks so they aren't garbage
 # collected mid-run, and lets every uploaded file process concurrently instead

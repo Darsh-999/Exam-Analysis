@@ -43,6 +43,25 @@ USER_PROMPT_TEMPLATE = (PROMPTS_DIR / "prompt.md").read_text(encoding="utf-8").s
 MAX_TOKENS = 3000
 
 
+def _strip_subtopics(topics_and_subtopics: list[dict]) -> list[dict]:
+    """Returns a copy of `topics_and_subtopics` with every topic's subtopics
+    zeroed out, so the model only ever sees topics to allocate against.
+
+    Built as a fresh copy (not an in-place mutation) because the caller
+    shares one `topics_and_subtopics` list across all batches of a document,
+    running concurrently via asyncio.gather.
+    """
+    return [
+        {
+            **subject,
+            "content": [
+                {**topic, "subtopics": []} for topic in subject.get("content", [])
+            ],
+        }
+        for subject in topics_and_subtopics
+    ]
+
+
 def _build_prompt(topics_and_subtopics: list[dict], questions_batch: list[dict]) -> str:
     return (
         USER_PROMPT_TEMPLATE.replace(
@@ -59,14 +78,23 @@ def _build_prompt(topics_and_subtopics: list[dict], questions_batch: list[dict])
 async def classify_batch(
     topics_and_subtopics: list[dict], questions_batch: list[dict]
 ) -> list[dict]:
-    """Sends one batch of questions plus the full syllabus """
+    """Sends one batch of questions plus the full syllabus.
+
+    Subtopics are stripped from the syllabus before it's sent -- the model
+    is only asked to allocate topics, not subtopics.
+    """
+    topics_only = _strip_subtopics(topics_and_subtopics)
     messages = [
         {"role": "system", "content": SYSTEM_INSTRUCTION},
-        {"role": "user", "content": _build_prompt(topics_and_subtopics, questions_batch)},
+        {"role": "user", "content": _build_prompt(topics_only, questions_batch)},
     ]
 
     logger.info(
         "Sending classification batch to Qwen (%d questions)", len(questions_batch)
+    )
+    logger.debug(
+        "Classification request payload: topics_and_subtopics=%s questions_batch=%s",
+        topics_only, questions_batch,
     )
     result = await call_structured(messages, ClassificationBatchResult, MAX_TOKENS)
     logger.info("Received Qwen response for classification batch")

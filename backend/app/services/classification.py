@@ -98,11 +98,18 @@ async def _classify_batch_safe(
         )
     except asyncio.TimeoutError:
         logger.error(
-            "Classification batch timed out: doc_id=%s size=%d", doc_id, len(batch)
+            "Classification batch timed out after %ss -- falling back to default "
+            "(no topics assigned) for this batch: doc_id=%s batch_size=%d "
+            "topics_count=%d questions=%s",
+            CLASSIFICATION_TIMEOUT_SECONDS, doc_id, len(batch),
+            len(topics_and_subtopics), batch,
         )
     except Exception:
         logger.exception(
-            "Classification batch failed: doc_id=%s size=%d", doc_id, len(batch)
+            "Classification batch failed -- falling back to default (no topics "
+            "assigned) for this batch: doc_id=%s batch_size=%d topics_count=%d "
+            "questions=%s",
+            doc_id, len(batch), len(topics_and_subtopics), batch,
         )
     return []
 
@@ -159,7 +166,9 @@ async def classify_question_paper(doc_id: ObjectId, project_id: str) -> None:
                 mongo_id = id_map.get(temp_id)
                 if mongo_id is None:
                     logger.error(
-                        "doc_id=%s hallucinated question_id=%r ignored", doc_id, temp_id
+                        "doc_id=%s hallucinated question_id=%r ignored (mapped "
+                        "topics discarded: %s)",
+                        doc_id, temp_id, topics_out,
                     )
                     continue
                 seen_ids.add(temp_id)
@@ -169,8 +178,9 @@ async def classify_question_paper(doc_id: ObjectId, project_id: str) -> None:
         missed = set(id_map) - seen_ids
         if missed:
             logger.warning(
-                "doc_id=%s LLM skipped %d of %d question(s)",
-                doc_id, len(missed), len(id_map),
+                "doc_id=%s LLM skipped %d of %d question(s) -- these keep their "
+                "default (no topic assigned): missing_question_ids=%s",
+                doc_id, len(missed), len(id_map), sorted(missed),
             )
 
         if updates:
@@ -179,5 +189,7 @@ async def classify_question_paper(doc_id: ObjectId, project_id: str) -> None:
         await _set_status(question_papers, doc_id, DocumentStatus.COMPLETED)
         logger.info("Classification completed: doc_id=%s", doc_id)
     except Exception as exc:
-        logger.exception("Classification failed: doc_id=%s", doc_id)
+        logger.exception(
+            "Classification failed: doc_id=%s project_id=%s", doc_id, project_id
+        )
         await _set_status(question_papers, doc_id, DocumentStatus.FAILED, error=str(exc))

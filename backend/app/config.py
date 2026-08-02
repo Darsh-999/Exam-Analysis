@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     vllm_request_timeout_seconds: int = 120
 
     # Max number of concurrent Qwen requests in flight at once
-    qwen_max_concurrency: int = 8
+    qwen_max_concurrency: int = 3
 
     # Path to the DocLayout YOLO model weights
-    doclayout_model_path: str = "models/doclayout_yolo.pt"
+    doclayout_model_path: str = "models/doclayout_yolo_docstructbench.pt"
 
     # Max number of concurrent DocLayout GPU inferences
     doclayout_gpu_concurrency: int = 1

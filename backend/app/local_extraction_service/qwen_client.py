@@ -52,4 +52,12 @@ async def call_structured(
             timeout=settings.vllm_request_timeout_seconds,
         )
 
-    return schema.model_validate_json(response.choices[0].message.content)
+    raw_content = response.choices[0].message.content
+    try:
+        return schema.model_validate_json(raw_content)
+    except Exception:
+        logger.error(
+            "Structured output failed schema validation: schema=%s raw_response=%r",
+            schema.__name__, raw_content,
+        )
+        raise
