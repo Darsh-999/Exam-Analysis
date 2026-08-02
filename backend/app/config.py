@@ -23,7 +23,12 @@ class Settings(BaseSettings):
 
     vllm_base_url: str = "http://localhost:8000/v1"
     vllm_model_name: str = "model"
-    vllm_request_timeout_seconds: int = 120
+    vllm_request_timeout_seconds: int = 600
+
+    # Must match the --max-model-len the vLLM server was launched with (see
+    # README.md) -- used to size how many output tokens a request can ask
+    # for without vLLM rejecting it for exceeding the total context window.
+    vllm_max_context_tokens: int = 8192
 
     # Max number of concurrent Qwen requests in flight at once
     qwen_max_concurrency: int = 3

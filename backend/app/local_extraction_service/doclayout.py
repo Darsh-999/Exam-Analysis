@@ -21,7 +21,7 @@ DPI = 150
 ROW_THRESHOLD = 10                 # pixels; boxes within this y-distance count as one row
 WIDTH_EXPANSION_THRESHOLD = 0.3    # fraction of page width -- wide boxes snap to margins
 PAGE_MARGIN = 30                   # pixels
-DETECTION_CONFIDENCE = 0.25
+DETECTION_CONFIDENCE = 0.2
 JPEG_QUALITY = 90
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]

@@ -22,7 +22,7 @@ from app.schemas import DocumentStatus
 
 logger = logging.getLogger(__name__)
 
-CLASSIFICATION_TIMEOUT_SECONDS = 120
+CLASSIFICATION_TIMEOUT_SECONDS = 600
 
 _running_tasks: set[asyncio.Task] = set()
 
